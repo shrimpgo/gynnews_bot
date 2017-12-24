@@ -2,9 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import configparser, logging, pickle, os.path
-import random, requests, telepot, time, tweepy
+import random, re, requests, telepot, time, tweepy
 from apscheduler.scheduler import Scheduler
-from TOKEN import *
 from bs4 import *
 
 # Initializing logs for apschedule
@@ -23,9 +22,8 @@ TWITTERCONSUMERSECRET = str(parserConfig.get('TWITTER', 'CONSUMERSECRET'))
 TWITTERACCESSTOKEN = str(parserConfig.get('TWITTER', 'ACCESSTOKEN'))
 TWITTERACCESSSECRET = str(parserConfig.get('TWITTER', 'ACCESSSECRET'))
 
-config = {"botKey": KEY, "idChat": ID}
-bot = telepot.Bot(config['botKey'])
-chat = config['idChat']
+bot = telepot.Bot(TELEGRAMKEY)
+chat = TELEGRAMID
 
 def loadDatabase():
     global database
@@ -42,12 +40,46 @@ def saveDatabase():
     with open(databaseFile, 'wb') as f:
         pickle.dump(database, f)
 
+def loadUA():
+    uas = []
+    with open("user-agents.txt", 'rb') as uaf:
+        for ua in uaf.readlines():
+            if ua:
+                uas.append(ua.strip()[0:-1-0])
+    random.shuffle(uas)
+    return uas
+
+def checkWeather():
+    '''
+    Check weather in Goiania from www.climatempo.com.br
+    '''
+    global databaseFile
+    tail = '\n#climatempo'
+    url = 'https://www.climatempo.com.br/previsao-do-tempo/15-dias/cidade/88/goiania-go'
+    ua = random.choice(loadUA())
+    req = requests.get(url , headers={'User-Agent': ua})
+    soup = BeautifulSoup(req.content, 'html.parser')
+    title = soup.findAll('p', {'class':'left top10 bold font12 txt-darkgray medium-8'})
+    descriptions = soup.findAll('div', {'class':'columns small-12 medium-12 description-block'})
+    maxW = soup.findAll('p', {'arial-label':'temperatura máxima'})
+    minW = soup.findAll('p', {'arial-label':'temperatura mínima'})
+
+    msg = 'PREVISÃO DO TEMPO EM GOIÂNIA\n\n'.decode('utf-8')
+    for i in range(3):
+        msg += re.sub('\s+', ' ', title[i].text) + ':\n'
+        msg += ' - Mínima: '.decode('utf-8') + minW[i].text + '\n'
+        msg += ' - Máxima: '.decode('utf-8') + maxW[i].text + '\n'
+        msg += ' - ' + descriptions[i].text.strip() + '\n\n'
+
+    bot.sendMessage(chat, msg + tail)
+
 def checkTwitter(twitterUser):
     '''
     Check twitter accounts for the last 20 tweets
     - Arg1: twitter account
     '''
     global api
+    tail = '\n#' + twitterUser
     # Recover last 20 tweets (default) without retweets
     tweets = api.user_timeline(screen_name = twitterUser,        
                             tweet_mode='extended',
@@ -62,11 +94,11 @@ def checkTwitter(twitterUser):
             if t.entities.has_key('media'):
                 if t.entities['media'][0].has_key('media_url'):
                     img = t.entities['media'][0]['media_url']
-                    bot.sendPhoto(chat, img, caption = text)
+                    bot.sendPhoto(chat, img, caption = text + tail)
                 else:
-                    bot.sendMessage(chat, text)
+                    bot.sendMessage(chat, text + tail)
             else:
-                bot.sendMessage(chat, text)
+                bot.sendMessage(chat, text + tail)
             database.append(text[:50])
             saveDatabase()
 
@@ -85,14 +117,15 @@ def main():
     loadDatabase()
     twitterAuth()
 
-    # Using a scheduler to check every 5 minutes for new tweets
+    # # Using a scheduler to check every 5 minutes for new tweets
     schd = Scheduler()
-    schd.add_interval_job(checkTwitter, minutes = 2,  args = ['rmtcgoiania'])
+    schd.add_interval_job(checkTwitter, minutes = 5,  args = ['rmtcgoiania'])
+    schd.add_interval_job(checkWeather, hours = 6)
     schd.start()
 
     # Keeping the main thread alive
     while True:
-        time.sleep(100)
+        time.sleep(300)
 
 if __name__ == '__main__':
     main()
