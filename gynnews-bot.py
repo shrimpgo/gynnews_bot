@@ -117,9 +117,11 @@ def main():
     loadDatabase()
     twitterAuth()
 
-    # # Using a scheduler to check every 5 minutes for new tweets
+    # Scheduler for any different task
     schd = Scheduler()
+    ## Using a scheduler to check every 5 minutes for new tweets
     schd.add_interval_job(checkTwitter, minutes = 5,  args = ['rmtcgoiania'])
+    ## Using a scheduler to get every 6 hours informations about weather
     schd.add_interval_job(checkWeather, hours = 6)
     schd.start()
 
