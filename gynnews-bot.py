@@ -87,12 +87,12 @@ def main():
 
     # Using a scheduler to check every 5 minutes for new tweets
     schd = Scheduler()
-    schd.add_interval_job(checkTwitter, minutes = 5,  args = ['rmtcgoiania'])
+    schd.add_interval_job(checkTwitter, minutes = 2,  args = ['rmtcgoiania'])
     schd.start()
 
     # Keeping the main thread alive
     while True:
-        time.sleep(300)
+        time.sleep(100)
 
 if __name__ == '__main__':
     main()
