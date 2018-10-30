@@ -1,5 +1,5 @@
 APScheduler==2.1.2
 tweepy==3.5.0
-requests==2.18.1
+requests==2.20.0
 telepot==12.5
 beautifulsoup4==4.6.0
