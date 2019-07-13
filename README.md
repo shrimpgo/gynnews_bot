@@ -15,6 +15,7 @@ News from Goiania city - Brazil on Telegram Bot
 - Requests
 - Telepot
 - Beautifulsoup4
+- Emoji
 
 ## Configuration file
 
