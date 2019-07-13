@@ -1,10 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import configparser, logging, pickle, os.path
+import configparser, logging, pickle, os.path, json
 import random, re, requests, telepot, time, tweepy
 from apscheduler.scheduler import Scheduler
 from bs4 import *
+from emoji import emojize
 
 # Initializing logs for apschedule
 logging.basicConfig()
@@ -64,14 +65,41 @@ def checkWeather():
     maxW = soup.findAll('p', {'arial-label':'temperatura máxima'})
     minW = soup.findAll('p', {'arial-label':'temperatura mínima'})
 
-    msg = 'PREVISÃO DO TEMPO EM GOIÂNIA\n\n'.decode('utf-8')
+    msg = '*PREVISÃO DO TEMPO EM GOIÂNIA*\n\n'.decode('utf-8')
     for i in range(3):
-        msg += re.sub('\s+', ' ', title[i].text) + ':\n'
-        msg += ' - Mínima: '.decode('utf-8') + minW[i].text + '\n'
-        msg += ' - Máxima: '.decode('utf-8') + maxW[i].text + '\n'
+        msg += '*' + re.sub('\s+', ' ', title[i].text) + ':*\n'
+        msg += '_Mínima: _'.decode('utf-8') + minW[i].text + '\n'
+        msg += '_Máxima: _'.decode('utf-8') + maxW[i].text + '\n'
         msg += ' - ' + descriptions[i].text.strip() + '\n\n'
 
-    bot.sendMessage(chat, msg + tail)
+    bot.sendMessage(chat, msg + tail, parse_mode='Markdown')
+
+def checkQuotation():
+    '''
+    Check last dolar quotation and BTC to Real BR from economia.awesomeapi.com.br
+    '''
+    global databaseFile
+    tail = '\n#awesomeapi'
+    url = 'https://economia.awesomeapi.com.br/all'
+    ua = random.choice(loadUA())
+    req = requests.get(url , headers={'User-Agent': ua})
+    reqj = req.json()
+
+    msg = ':money-mouth_face: *COTAÇÃO DE MOEDAS* :money-mouth_face:\n\n'.decode('utf-8')
+    for i in ['USD','USDT','BTC']:
+        if i == 'BTC':
+            msg += '*' + reqj[i]['name'] + ':* :moneybag:\n'
+            msg += '_Compra:_ R$ '.decode('utf-8') + reqj[i]['bid'] + '\n'
+            msg += '_Venda:_ R$ '.decode('utf-8') + reqj[i]['ask'] + '\n'
+            msg += '_Variação:_ R$ '.decode('utf-8') + reqj[i]['varBid'] + '\n\n'
+        else:
+            msg += '*' + reqj[i]['name'] + ':* :dollar:\n'
+            msg += '_Compra:_ R$ '.decode('utf-8') + reqj[i]['bid'].replace('.',',') + '\n'
+            msg += '_Venda:_ R$ '.decode('utf-8') + reqj[i]['ask'].replace('.',',') + '\n'
+            msg += '_Variação:_ R$ '.decode('utf-8') + reqj[i]['varBid'].replace('.',',') + '\n\n'
+
+    Message = bot.sendMessage(chat, emojize(msg, use_aliases=True) + tail, parse_mode='Markdown')
+    bot.pinChatMessage(chat, Message['message_id'], disable_notification=True)
 
 def checkTwitter(twitterUser):
     '''
@@ -119,10 +147,17 @@ def main():
 
     # Scheduler for any different task
     schd = Scheduler()
-    ## Using a scheduler to check every 5 minutes for new tweets
+    '''
+    Using a scheduler to check every 5 minutes for new tweets. If you want to add more twitter's profile, just follow example below:
+
+    schd.add_interval_job(checkTwitter, minutes = MIN,  args = ['profile'])
+    '''
     schd.add_interval_job(checkTwitter, minutes = 5,  args = ['rmtcgoiania'])
-    ## Using a scheduler to get every 6 hours informations about weather
-    schd.add_interval_job(checkWeather, hours = 6)
+    schd.add_interval_job(checkTwitter, minutes = 5,  args = ['jornalopcao'])
+    ## Using a scheduler to get every 6 hours and 16 hours informations about weather
+    schd.add_cron_job(checkWeather, hour='6,16', minute=00)
+    ## Using a scheduler to get every 6 hours and 16 hours informations about quotation
+    schd.add_cron_job(checkQuotation, hour='8,14', minute='00')
     schd.start()
 
     # Keeping the main thread alive
