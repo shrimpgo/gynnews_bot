@@ -1,9 +1,9 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
 import configparser, logging, pickle, os.path, json
 import random, re, requests, telepot, time, tweepy
-from apscheduler.scheduler import Scheduler
+from apscheduler.schedulers.background import BlockingScheduler
 from bs4 import *
 from emoji import emojize
 
@@ -112,15 +112,14 @@ def checkTwitter(twitterUser):
     tweets = api.user_timeline(screen_name = twitterUser,        
                             tweet_mode='extended',
                             include_rts = False)
-
     # Transverse tweets in reverse order
     for t in reversed(tweets):
         text = t.full_text
         # Check if the content is in the database
         if not text[:50] in database:
             # Check if there are images or videos
-            if t.entities.has_key('media'):
-                if t.entities['media'][0].has_key('media_url'):
+            if 'media' in t.entities:
+                if 'media_url' in t.entities['media'][0]:
                     img = t.entities['media'][0]['media_url']
                     bot.sendPhoto(chat, img, caption = text + tail)
                 else:
@@ -146,18 +145,18 @@ def main():
     twitterAuth()
 
     # Scheduler for any different task
-    schd = Scheduler()
+    schd = BlockingScheduler()
     '''
     Using a scheduler to check every 5 minutes for new tweets. If you want to add more twitter's profile, just follow example below:
 
     schd.add_interval_job(checkTwitter, minutes = MIN,  args = ['profile'])
     '''
-    schd.add_interval_job(checkTwitter, minutes = 5,  args = ['rmtcgoiania'])
-    schd.add_interval_job(checkTwitter, minutes = 5,  args = ['jornalopcao'])
+    schd.add_job(checkTwitter, 'interval', minutes = 5,  args = ['rmtcgoiania'])
+    schd.add_job(checkTwitter, 'interval', minutes = 5,  args = ['jornalopcao'])
     ## Using a scheduler to get every 6 hours and 16 hours informations about weather
-    schd.add_cron_job(checkWeather, hour='6,16', minute=00)
+    schd.add_job(checkWeather, 'cron', hour='6,16', minute=00)
     ## Using a scheduler to get every 6 hours and 16 hours informations about quotation
-    schd.add_cron_job(checkQuotation, hour='8,14', minute='00')
+    schd.add_job(checkQuotation, 'cron', hour='8,14', minute='00')
     schd.start()
 
     # Keeping the main thread alive

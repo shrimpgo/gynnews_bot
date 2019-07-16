@@ -3,10 +3,10 @@ News from Goiania city - Brazil on Telegram Bot
 
 ## Dependencies
 
-- The program was made in python 2.7, and all dependencies can be installed
-  using `pip` with the following command: 
+- The program was made in python 3.5, and all dependencies can be installed
+  using `pip3` with the following command: 
 
-`pip install -r requirements.txt`
+`pip3 install -r requirements.txt`
 
 ### List of dependencies:
 
