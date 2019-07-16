@@ -30,16 +30,16 @@ def loadDatabase():
     global database
     global databaseFile
     try:
-        with open(databaseFile) as f:
-            database = pickle.load(f)
+        f = open(databaseFile, encoding='8859').read()
+        database = pickle.loads(bytes(f, encoding='8859'))
     except:
         database = []
 
 def saveDatabase():
     global databaseFile
     global database
-    with open(databaseFile, 'wb') as f:
-        pickle.dump(database, f)
+    f = open(databaseFile, 'wb')
+    pickle.dump(database, f)
 
 def loadUA():
     uas = []
@@ -65,11 +65,11 @@ def checkWeather():
     maxW = soup.findAll('p', {'arial-label':'temperatura máxima'})
     minW = soup.findAll('p', {'arial-label':'temperatura mínima'})
 
-    msg = '*PREVISÃO DO TEMPO EM GOIÂNIA*\n\n'.decode('utf-8')
+    msg = '*PREVISÃO DO TEMPO EM GOIÂNIA*\n\n'
     for i in range(3):
         msg += '*' + re.sub('\s+', ' ', title[i].text) + ':*\n'
-        msg += '_Mínima: _'.decode('utf-8') + minW[i].text + '\n'
-        msg += '_Máxima: _'.decode('utf-8') + maxW[i].text + '\n'
+        msg += '_Mínima: _' + minW[i].text + '\n'
+        msg += '_Máxima: _' + maxW[i].text + '\n'
         msg += ' - ' + descriptions[i].text.strip() + '\n\n'
 
     bot.sendMessage(chat, msg + tail, parse_mode='Markdown')
@@ -85,18 +85,18 @@ def checkQuotation():
     req = requests.get(url , headers={'User-Agent': ua})
     reqj = req.json()
 
-    msg = ':money-mouth_face: *COTAÇÃO DE MOEDAS* :money-mouth_face:\n\n'.decode('utf-8')
+    msg = ':money-mouth_face: *COTAÇÃO DE MOEDAS* :money-mouth_face:\n\n'
     for i in ['USD','USDT','BTC']:
         if i == 'BTC':
             msg += '*' + reqj[i]['name'] + ':* :moneybag:\n'
-            msg += '_Compra:_ R$ '.decode('utf-8') + reqj[i]['bid'] + '\n'
-            msg += '_Venda:_ R$ '.decode('utf-8') + reqj[i]['ask'] + '\n'
-            msg += '_Variação:_ R$ '.decode('utf-8') + reqj[i]['varBid'] + '\n\n'
+            msg += '_Compra:_ R$ ' + reqj[i]['bid'] + '\n'
+            msg += '_Venda:_ R$ ' + reqj[i]['ask'] + '\n'
+            msg += '_Variação:_ R$ ' + reqj[i]['varBid'] + '\n\n'
         else:
             msg += '*' + reqj[i]['name'] + ':* :dollar:\n'
-            msg += '_Compra:_ R$ '.decode('utf-8') + reqj[i]['bid'].replace('.',',') + '\n'
-            msg += '_Venda:_ R$ '.decode('utf-8') + reqj[i]['ask'].replace('.',',') + '\n'
-            msg += '_Variação:_ R$ '.decode('utf-8') + reqj[i]['varBid'].replace('.',',') + '\n\n'
+            msg += '_Compra:_ R$ ' + reqj[i]['bid'].replace('.',',') + '\n'
+            msg += '_Venda:_ R$ ' + reqj[i]['ask'].replace('.',',') + '\n'
+            msg += '_Variação:_ R$ ' + reqj[i]['varBid'].replace('.',',') + '\n\n'
 
     Message = bot.sendMessage(chat, emojize(msg, use_aliases=True) + tail, parse_mode='Markdown')
     bot.pinChatMessage(chat, Message['message_id'], disable_notification=True)
@@ -156,7 +156,7 @@ def main():
     ## Using a scheduler to get every 6 hours and 16 hours informations about weather
     schd.add_job(checkWeather, 'cron', hour='6,16', minute=00)
     ## Using a scheduler to get every 6 hours and 16 hours informations about quotation
-    schd.add_job(checkQuotation, 'cron', hour='8,14', minute='00')
+    schd.add_job(checkQuotation, 'cron', hour='8,14', minute=00)
     schd.start()
 
     # Keeping the main thread alive
