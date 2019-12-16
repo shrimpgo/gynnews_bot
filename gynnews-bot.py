@@ -23,6 +23,9 @@ TWITTERCONSUMERSECRET = str(parserConfig.get('TWITTER', 'CONSUMERSECRET'))
 TWITTERACCESSTOKEN = str(parserConfig.get('TWITTER', 'ACCESSTOKEN'))
 TWITTERACCESSSECRET = str(parserConfig.get('TWITTER', 'ACCESSSECRET'))
 
+# CLIMATEMPO TOKEN
+CTKEY = str(parserConfig.get('CLIMATEMPO', 'TOKEN'))
+
 bot = telepot.Bot(TELEGRAMKEY)
 chat = TELEGRAMID
 
@@ -52,27 +55,41 @@ def loadUA():
 
 def checkWeather():
     '''
-    Check weather in Goiania from www.climatempo.com.br
+    Check weather in Goiania from apiadvisor.climatempo.com.br
+
+    Create your token: https://advisor.climatempo.com.br
+    Documentation: http://apiadvisor.climatempo.com.br/doc/index.html#api-Forecast-Forecast15DaysByCity
     '''
+    ico = {'1':':sunny:',
+            '2':':white_sun_with_small_cloud:',
+            '2r':':white_sun_behind_cloud:',
+            '3':':cloud_with_rain:', 
+            '3tm':':cloud:',
+            '4':':white_sun_behind_cloud_with_rain:',
+            '4r':':white_sun_behind_cloud_with_rain:',
+            '4t':':white_sun_behind_cloud_with_rain: :cloud_with_lightning:',
+            '5':':cloud_with_rain:',
+            '6':':thunder_cloud_and_rain:',
+            '9':':white_sun_with_small_cloud:' }
     global databaseFile
     tail = '\n#climatempo'
-    url = 'https://www.climatempo.com.br/previsao-do-tempo/15-dias/cidade/88/goiania-go'
+    url = 'http://apiadvisor.climatempo.com.br/api/v1/forecast/locale/6861/days/15?token=' + CTKEY
     ua = random.choice(loadUA())
     req = requests.get(url , headers={'User-Agent': ua})
-    soup = BeautifulSoup(req.content, 'html.parser')
-    title = soup.findAll('p', {'class':'left top10 bold font12 txt-darkgray medium-8'})
-    descriptions = soup.findAll('div', {'class':'columns small-12 medium-12 description-block'})
-    maxW = soup.findAll('p', {'arial-label':'temperatura máxima'})
-    minW = soup.findAll('p', {'arial-label':'temperatura mínima'})
+    data = json.loads(req.text)
 
-    msg = '*PREVISÃO DO TEMPO EM GOIÂNIA*\n\n'
+    msg = ':sunny: *PREVISÃO DO TEMPO EM GOIÂNIA* :umbrella_with_rain_drops:\n\n'
     for i in range(3):
-        msg += '*' + re.sub('\s+', ' ', title[i].text) + ':*\n'
-        msg += '_Mínima: _' + minW[i].text + '\n'
-        msg += '_Máxima: _' + maxW[i].text + '\n'
-        msg += ' - ' + descriptions[i].text.strip() + '\n\n'
+        msg += '*' +  'Dia ' + data['data'][i]['date_br'] + ':*\n'
+        msg += '*Temperatura:* :thermometer:\n'
+        msg += '· ' + '_Mín: _' + str(data['data'][i]['temperature']['min']) + '° C' + '\n'
+        msg += '· ' + '_Máx: _' + str(data['data'][i]['temperature']['max']) + '° C' + '\n'
+        msg += '*Umidade do Ar:* :droplet:\n'
+        msg += '· ' + '_Mín: _' + str(data['data'][i]['humidity']['min']) + '%' + '\n'
+        msg += '· ' + '_Máx: _' + str(data['data'][i]['humidity']['max']) + '%' + '\n'
+        msg += ' - ' + data['data'][i]['text_icon']['text']['phrase']['reduced'] + ' ' + ico[data['data'][i]['text_icon']['icon']['day']] + '\n\n'
 
-    bot.sendMessage(chat, msg + tail, parse_mode='Markdown')
+    bot.sendMessage(chat, emojize(msg, use_aliases=True) + tail, parse_mode='Markdown')
 
 def checkQuotation():
     '''

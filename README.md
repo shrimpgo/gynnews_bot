@@ -31,4 +31,7 @@ ACCESSSECRET = <twitter secret>
 [TELEGRAM]
 KEY = <telegram token provided by botfather>
 ID = <telegram channel id>
+
+[CLIMATEMPO]
+TOKEN = <climatempo token>
 ```
