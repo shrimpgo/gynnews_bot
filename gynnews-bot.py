@@ -173,7 +173,7 @@ def main():
     ## Using a scheduler to get every 6 hours and 16 hours informations about weather
     schd.add_job(checkWeather, 'cron', hour='6,16', minute=00)
     ## Using a scheduler to get every 6 hours and 16 hours informations about quotation
-    schd.add_job(checkQuotation, 'cron', hour='8,14', minute=00)
+    schd.add_job(checkQuotation, 'cron', day_of_week='mon-fri', hour='8,14', minute=00)
     schd.start()
 
     # Keeping the main thread alive
@@ -181,4 +181,7 @@ def main():
         time.sleep(300)
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("Quitting...")
