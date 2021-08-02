@@ -3,4 +3,4 @@ beautifulsoup4==4.7.1
 emoji==0.5.2
 requests==2.22.0
 telepot==12.7
-tweepy==3.8.0
+tweepy==3.10.0

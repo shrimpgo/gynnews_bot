@@ -7,8 +7,8 @@ RUN mkdir /app
 WORKDIR /app
 ADD *txt bot.conf gynnews-bot.py /app/
 
-# Remove this line below if you never run this instance before
-ADD .database /app/
+# Leave commented this line below if you never run this instance before
+#ADD .database /app/
 
 RUN pip3 install --upgrade pip && pip3 install -r requirements.txt
 

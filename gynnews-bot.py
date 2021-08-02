@@ -103,7 +103,7 @@ def checkQuotation():
     reqj = req.json()
 
     msg = ':money-mouth_face: *COTAÇÃO DE MOEDAS* :money-mouth_face:\n\n'
-    for i in ['USD','USDT','BTC']:
+    for i in ['USD','CAD','BTC']:
         if i == 'BTC':
             msg += '*' + reqj[i]['name'] + ':* :moneybag:\n'
             msg += '_Compra:_ R$ ' + reqj[i]['bid'] + '\n'
